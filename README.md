@@ -163,6 +163,28 @@ vla-ttt infer --config configs/inference/default.yaml \
 
 This command runs one episode. It does not run an evaluation suite or calculate success rates. Full VLA-TTT inference requires a checkpoint with the project's trained TTT parameters, which the base GR00T checkpoint lacks. For MoveCube, the official control adapter expands the standard eight-dimensional action into the native 15-dimensional format with zero velocity feedforward. This provides interface compatibility. Reproducing the original trajectory or completing the task is not guaranteed.
 
+## Franka Panda on ROS 2
+
+`vla-ttt infer-panda` runs one physical-robot episode using the same trained checkpoint and training statistics as simulator inference. Run it on a Linux CUDA machine that can discover the robot's ROS graph. Source a ROS distribution whose `rclpy` matches the project's Python 3.12 interpreter (e.g. Jazzy on Ubuntu 24.04), then activate the model environment. The node requires `sensor_msgs`, `trajectory_msgs`, `control_msgs`, and `action_msgs`. Robot bringup, cameras and controllers run in the lab's existing ROS environment.
+
+```bash
+ros2 control list_controllers
+ros2 topic list -t
+ros2 action list -t
+```
+
+Use the reported names in [the Panda configuration](configs/inference/panda_ros2.yaml). The supplied names are examples. Supply two stamped raw RGB or BGR image streams on the same clock as the joint states. List the seven Panda joints in physical joint order. The two finger positions can come from the arm topic or a separate JointState topic. The node averages their displacements in meters. It expects an active arm controller exposing FollowJointTrajectory and a Franka Hand GripperCommand server accepting a per-finger target in meters. Check the action type and position convention on your installed driver. [Arm interface](https://control.ros.org/jazzy/doc/ros2_controllers/joint_trajectory_controller/doc/userdoc.html) · [Franka Hand implementation](https://github.com/frankarobotics/franka_ros2/blob/humble/franka_gripper/src/gripper_action_server.cpp)
+
+Start with prediction logging on live sensors or a rosbag replay with fresh timestamps. This command uses the default post-training checkpoint path. Override it with `--checkpoint` and optionally `--statistics`.
+
+```bash
+vla-ttt infer-panda --instruction "Pick up the green cube." --steps 10
+```
+
+For a supervised motion test with the robot workspace clear, change the example to `--steps 1 --execute`. Each step prints the measured state, predicted action and observation age. Review the configured step bound, trajectory duration, gripper positions and effort for the lab setup. For live execution the node checks the prediction age and target against fresh joint feedback and [Panda joint limits](https://frankarobotics.github.io/docs/robot_specifications.html), then waits for the arm result before commanding the hand. A nonnegative gripper value requests open, a negative value requests close. This node performs joint-space control and relies on the lab controller and operator for collision protection.
+
+For a demonstration-conditioned task, add e.g. `--demo-frames 30` and provide the live demonstration during capture. The node writes those samples into memory before the first prediction. Each invocation starts a new episode. This initial hardware mode replans after one waypoint and waits for controller feedback. Its effective sampling rate depends on model latency and motion duration and differs from the simulator's 40-action chunk schedule. Record task success separately from controller completion.
+
 ## Implementation and verification
 
 - `models/` contains the GR00T adapter, 16 differentiable fast-weight MLP layers, register tokens, RoPE, gating, and explicit memory state.

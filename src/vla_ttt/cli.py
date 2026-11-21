@@ -208,6 +208,19 @@ def command_infer(args) -> None:
     _print({"task": task, "episode": episode, "split": split, "status": result.get("status")})
 
 
+def command_panda(args) -> None:
+    from .panda_ros2 import run, validate_settings
+
+    config = _config(args)
+    settings = config["panda"]
+    validate_settings(settings)
+    if args.steps < 1 or args.demo_frames < 0 or not args.instruction.strip():
+        raise ValueError("Specify a task instruction, positive step count and nonnegative demo length")
+    import rclpy  # Check the sourced ROS environment before loading model weights.
+    run(_inference_policy(config, args.checkpoint), settings, args.instruction,
+        steps=args.steps, demo_frames=args.demo_frames, execute=args.execute)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="vla-ttt", description="VLA-TTT for RoboMME-Plus")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -252,6 +265,15 @@ def build_parser() -> argparse.ArgumentParser:
     infer.add_argument("--split", choices=["train", "test"], default=None)
     infer.add_argument("--gui", action="store_true")
     infer.set_defaults(func=command_infer)
+    panda = add("infer-panda", "Predict from a live ROS 2 Panda for one episode", "configs/inference/panda_ros2.yaml")
+    panda.add_argument("--checkpoint")
+    panda.add_argument("--statistics")
+    panda.add_argument("--device")
+    panda.add_argument("--instruction", required=True)
+    panda.add_argument("--steps", type=int, default=1, help="Number of fresh observations to act on")
+    panda.add_argument("--demo-frames", type=int, default=0, help="Live demonstration samples before execution")
+    panda.add_argument("--execute", action="store_true", help="Send predicted goals to the Panda controllers")
+    panda.set_defaults(func=command_panda)
     return parser
 
 

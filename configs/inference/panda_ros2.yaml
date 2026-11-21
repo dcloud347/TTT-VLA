@@ -1,0 +1,20 @@
+_base_: default.yaml
+# Example ROS graph names. Replace these with the names on the Panda host.
+panda:
+  front_image: /front_camera/color/image_raw
+  wrist_image: /wrist_camera/color/image_raw
+  joint_states: /joint_states
+  finger_states: /franka_gripper/joint_states
+  arm_joints: [panda_joint1, panda_joint2, panda_joint3, panda_joint4, panda_joint5, panda_joint6, panda_joint7]
+  finger_joints: [panda_finger_joint1, panda_finger_joint2]
+  arm_action: /joint_trajectory_controller/follow_joint_trajectory
+  gripper_action: /franka_gripper/gripper_action
+  # Experiment settings. Angles in rad, durations in s, per-finger travel in m.
+  max_sensor_skew: 0.08
+  max_sensor_age: 0.25
+  max_prediction_age: 2.0
+  max_joint_step: 0.05
+  trajectory_duration: 0.6
+  open_finger_position: 0.039
+  close_finger_position: 0.0
+  gripper_max_effort: 10.0
