@@ -1,0 +1,20 @@
+_base_: ../base.yaml
+model:
+  dtype: bfloat16
+data:
+  variant: robomme
+  # Based on the pinned official RecordWrapper; verify provenance of local files.
+  observation_timing: post_action
+  h5_path: data/robomme/h5
+  # Keep demonstrations for tasks whose target depends on the video history.
+  mode: video
+training:
+  stage: pretrain
+  total_steps: 30000
+  learning_rate: 0.00002
+  output_dir: outputs/robomme/pretrain
+  scheduler:
+    name: wsd
+    warmup_steps: 1000
+    decay_steps: 3000
+

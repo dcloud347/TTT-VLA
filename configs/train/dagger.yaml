@@ -1,0 +1,8 @@
+_base_: posttrain.yaml
+data:
+  mode: dagger
+  # Must contain real per-frame robot/human-correction source labels.
+  h5_path: data/robomme_plus/dagger_h5
+training:
+  output_dir: outputs/robomme_plus/dagger
+

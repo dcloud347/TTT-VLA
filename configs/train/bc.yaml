@@ -1,0 +1,6 @@
+_base_: posttrain.yaml
+data:
+  mode: bc
+training:
+  output_dir: outputs/robomme_plus/bc
+

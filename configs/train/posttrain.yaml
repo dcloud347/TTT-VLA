@@ -1,0 +1,10 @@
+_base_: ../base.yaml
+data:
+  variant: robomme_plus
+  h5_path: data/robomme_plus/h5
+  mode: video
+training:
+  stage: posttrain
+  init_checkpoint: outputs/robomme/pretrain/checkpoints/latest.pt
+  output_dir: outputs/robomme_plus/posttrain
+

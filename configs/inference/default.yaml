@@ -1,0 +1,6 @@
+_base_: ../base.yaml
+model:
+  dtype: bfloat16
+inference:
+  checkpoint: outputs/robomme_plus/posttrain/checkpoints/latest.pt
+

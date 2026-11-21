@@ -1,0 +1,77 @@
+# Commands run from the repository root; data paths are relative to the cwd.
+model:
+  checkpoint: nvidia/GR00T-N1.7-3B
+  revision: 373d34e2723d928870157d07dc216a19a624b5bb
+  backbone_alignment: public_adaptation
+  upstream_path: third_party/Isaac-GR00T
+  statistics_path: data/robomme/train_statistics.json
+  statistics_dataset: robomme
+  device: cuda
+  # FP32 slow parameters/AdamW state, BF16 forward via training.precision.
+  dtype: float32
+  use_flash_attention: false
+  use_percentiles: false
+  local_files_only: false
+
+ttt:
+  memory_dim: 1024
+  fast_hidden_dim: 1536
+  num_register_tokens: 16
+  gate_init: 0.001
+  inner_lr: 0.1
+  rope_theta: 10000.0
+  normalize_input: true
+
+data:
+  variant: robomme_plus
+  observation_timing: pre_action
+  h5_path: data/robomme_plus/h5
+  split: train
+  split_manifest: null
+  tasks: null
+  mode: video
+  action_horizon: 40
+  observation_stride: 40
+  demo_stride: 1
+  # Preserve the entire demonstration prefix; no silent truncation.
+  context_steps: null
+  seed: 0
+
+training:
+  stage: posttrain
+  device: cuda
+  precision: bf16
+  batch_size: 1
+  segment_steps: 8
+  total_steps: 20000
+  learning_rate: 0.00005
+  weight_decay: 0.00001
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  seed: 0
+  shuffle: true
+  drop_last: false
+  checkpoint_every: 1000
+  log_every: 10
+  wandb: false
+  output_dir: outputs/robomme_plus
+  resume_strict: true
+  # Whole episodes can take different times on each rank before synchronization.
+  distributed_timeout_seconds: 3600
+  scheduler:
+    name: cosine
+    warmup_steps: 500
+    min_lr_ratio: 0.0
+  # No context-length experiment sweep. Optional training curriculum only.
+  context_schedule: []
+
+inference:
+  checkpoint: null
+  denoising_steps: 4
+  commit_rule: last_candidate
+  execution_horizon: 40
+  task: VideoRepick
+  episode: 0
+  split: train
+  gui_render: false
+
