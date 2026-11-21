@@ -6,7 +6,6 @@ __pycache__/
 .DS_Store
 build/
 dist/
-data/
 outputs/
 checkpoints/
 third_party/
